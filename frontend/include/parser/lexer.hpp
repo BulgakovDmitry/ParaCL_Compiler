@@ -75,7 +75,9 @@ class Lexer final : public yyFlexLexer {
         return yy::parser::token::TOK_SEMICOLON;
     }
     int process_id() const noexcept { return yy::parser::token::TOK_ID; }
-    int process_number() const noexcept { return yy::parser::token::TOK_NUMBER; }
+    int process_number() const noexcept {
+        return yy::parser::token::TOK_NUMBER;
+    }
 
     int yylex() override;
 };
