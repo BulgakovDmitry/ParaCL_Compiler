@@ -11,8 +11,9 @@ class Simulator final : public ASTVisitor {
 
     using nametable_t = std::unordered_map<std::string, number_t>;
     nametable_t nametable_;
+
   public:
-    nametable_t& get_nametable() { return nametable_; }
+    nametable_t &get_nametable() { return nametable_; }
 
     void visit(Program &node) override;
     void visit(Block_stmt &node) override;
