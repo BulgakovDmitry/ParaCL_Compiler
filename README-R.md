@@ -80,34 +80,41 @@ cmake --build build
 <summary>Грамматика</summary>
   
 ```
-Program        ::= StmtList EOF
+Program           ::= TopLevelStmtList EOF ;
 
-StmtList       ::= /* empty */ |  StmtList Statement 
+TopLevelStmtList  ::= /* empty */ |  TopLevelStmtList TopLevelStatement 
+TopLevelStatement ::= Statement 
 
-Statement      ::= AssignmentStmt ';' | InputStmt ';' | IfStmt | WhileStmt | PrintStmt ';' | BlockStmt | ';'
+StmtList          ::= /* empty */ |  StmtList Statement 
+Statement         ::= AssignmentStmt ';' | 
+                      IfStmt | WhileStmt | 
+                      PrintStmt ';'      | 
+                      BlockStmt          | 
+                      EmptyStmt 
 
-BlockStmt      ::= '{' StmtList '}'
-AssignmentStmt ::= Var '=' Expression
-InputStmt      ::= Var '=' '?'
-IfStmt         ::= 'if'    '(' Expression ')' Statement [ 'else' Statement ]
-WhileStmt      ::= 'while' '(' Expression ')' Statement
-PrintStmt      ::= 'print' Expression
+EmptyStmt         ::= ';' 
+BlockStmt         ::= '{' StmtList '}' 
+AssignmentStmt    ::= Var '=' Expression
+IfStmt            ::= 'if'    '(' Expression ')' Statement [ 'else' Statement ]
+WhileStmt         ::= 'while' '(' Expression ')' Statement
+PrintStmt         ::= 'print' Expression
 
-Expression     ::= AssignmentExpr
-AssignmentExpr ::= Or | Var '=' AssignmentExpr
-Or             ::= And | Or '||' And
-And            ::= BitwiseOp | And '&&' BitwiseOp
-BitwiseOp      ::= Equality | BitwiseOp '&' Equality | BitwiseOp '^' Equality | BitwiseOp '|'  Equality
-Equality       ::= Relational ( ( '==' | '!=' ) Relational )*
-Relational     ::= AddSub ( ( '<' | '>' | '<=' | '>=' ) AddSub )*
-AddSub         ::= MulDiv ( ( '+' | '-' ) MulDiv )*
-MulDiv         ::= Unary  ( ( '*' | '/' ) Unary )*
-Unary          ::= '-' Unary | '+' Unary | '~' Unary | Primary
-Primary        ::= '(' Expression ')' | Var | Number
+Expression        ::= AssignmentExpr
+AssignmentExpr    ::= Or | Var '=' AssignmentExpr
+Or                ::= And | Or '||' And
+And               ::= BitwiseOp | And '&&' BitwiseOp
+BitwiseOp         ::= Equality | BitwiseOp '&' Equality | BitwiseOp '^' Equality | BitwiseOp '|'  Equality
+Equality          ::= Relational ( ( '==' | '!=' ) Relational )*
+Relational        ::= AddSub ( ( '<' | '>' | '<=' | '>=' ) AddSub )*
+AddSub            ::= MulDiv ( ( '+' | '-' ) MulDiv )*
+MulDiv            ::= Unary  ( ( '*' | '/' | '%' ) Unary )*
+Unary             ::= '-' Unary | '+' Unary | '!' Unary | Primary
+Primary           ::= '(' Expression ')' | Var | Number | Input
 
-Var            ::= [A-Za-z_][A-Za-z0-9_]*
-Number         ::= [1-9][0-9]* | '0'
-EOF            ::= __end_of_file__
+Input             ::= '?'
+Var               ::= [A-Za-z_][A-Za-z0-9_]*
+Number            ::= [1-9][0-9]* | '0'
+EOF               ::= __end_of_file__
 ```
 
 </details>
