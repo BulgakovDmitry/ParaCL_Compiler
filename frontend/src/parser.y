@@ -110,6 +110,8 @@
 %token TOK_WHILE         "while"
 %token TOK_PRINT         "print"
 %token TOK_INPUT         "?"
+%token TOK_FUNC          "func"
+%token TOK_RETURN        "return"
 
 /* --- Arithmetic operators --- */
 %token TOK_PLUS          "+"
@@ -143,6 +145,8 @@
 %token TOK_LEFT_BRACE    "{"
 %token TOK_RIGHT_BRACE   "}"
 %token TOK_SEMICOLON     ";"
+%token TOK_COMMA         ","
+%token TOK_COLON         ":"
 
 /* --- Tokens with semantic values --- */
 %token <std::string> TOK_ID     "identifier"
