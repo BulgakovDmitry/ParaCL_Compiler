@@ -27,8 +27,12 @@ class Lexer final : public yyFlexLexer {
     int process_while() const noexcept { return yy::parser::token::TOK_WHILE; }
     int process_print() const noexcept { return yy::parser::token::TOK_PRINT; }
     int process_input() const noexcept { return yy::parser::token::TOK_INPUT; }
-    int process_function() const noexcept { return yy::parser::token::TOK_FUNC; }
-    int process_return() const noexcept { return yy::parser::token::TOK_RETURN; }
+    int process_function() const noexcept {
+        return yy::parser::token::TOK_FUNC;
+    }
+    int process_return() const noexcept {
+        return yy::parser::token::TOK_RETURN;
+    }
 
     int process_plus() const noexcept { return yy::parser::token::TOK_PLUS; }
     int process_minus() const noexcept { return yy::parser::token::TOK_MINUS; }
@@ -77,15 +81,9 @@ class Lexer final : public yyFlexLexer {
     int process_semicolon() const noexcept {
         return yy::parser::token::TOK_SEMICOLON;
     }
-    int process_comma() const noexcept  { 
-        return yy::parser::token::TOK_COMMA; 
-    }
-    int process_colon() const noexcept  { 
-        return yy::parser::token::TOK_COLON; 
-    }
-    int process_id() const noexcept { 
-        return yy::parser::token::TOK_ID; 
-    }
+    int process_comma() const noexcept { return yy::parser::token::TOK_COMMA; }
+    int process_colon() const noexcept { return yy::parser::token::TOK_COLON; }
+    int process_id() const noexcept { return yy::parser::token::TOK_ID; }
     int process_number() const noexcept {
         return yy::parser::token::TOK_NUMBER;
     }
