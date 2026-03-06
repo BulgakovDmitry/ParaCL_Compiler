@@ -2,6 +2,8 @@
 #define FRONTEND_INCLUDE_AST_HPP
 
 #include "config.hpp"
+#include <optional>
+#include <string>
 #include <vector>
 
 namespace language {
@@ -20,6 +22,8 @@ class Print_stmt;
 class Number;
 class Variable;
 class Input;
+class Func;
+class Call;
 class Binary_operator;
 class Unary_operator;
 
@@ -38,6 +42,8 @@ class ASTVisitor {
     virtual void visit(Print_stmt &node) = 0;
     virtual void visit(Binary_operator &node) = 0;
     virtual void visit(Unary_operator &node) = 0;
+    virtual void visit(Func &node) = 0;
+    virtual void visit(Call &node) = 0;
     virtual void visit(Number &node) = 0;
     virtual void visit(Variable &node) = 0;
 };
@@ -191,6 +197,56 @@ class Print_stmt : public Statement {
     const Expression &get_value() const noexcept { return *value_; }
 
     void accept(ASTVisitor &visitor) override { visitor.visit(*this); }
+};
+
+class Func : public Expression {
+  public:
+    using ParamList = std::vector<name_t_sv>;
+
+  private:
+    std::optional<name_t_sv> func_name_;
+    ParamList params_;
+    Statement_ptr body_;
+
+  public:
+    Func(std::optional<name_t_sv> func_name, ParamList params,
+         Statement_ptr body)
+        : func_name_(func_name), params_(std::move(params)),
+          body_(std::move(body)) {}
+
+    bool has_name() const noexcept { return func_name_.has_value(); }
+
+    std::optional<name_t_sv> get_func_name() const noexcept {
+        return func_name_;
+    }
+
+    const ParamList &get_params() const noexcept { return params_; }
+
+    Statement &get_body() noexcept { return *body_; }
+    const Statement &get_body() const noexcept { return *body_; }
+
+    void accept(ASTVisitor &visitor) override { visitor.visit(*this); }
+};
+
+class Call final : public Expression {
+  public:
+    using ArgExprList = std::vector<Expression_ptr>;
+
+  private:
+    Expression_ptr target_;
+    ArgExprList args_;
+
+  public:
+    Call(Expression_ptr target, ArgExprList args)
+        : target_(std::move(target)), args_(std::move(args)) {}
+
+    Expression &get_target() noexcept { return *target_; }
+    const Expression &get_target() const noexcept { return *target_; }
+
+    const ArgExprList &get_args() const noexcept { return args_; }
+    ArgExprList &get_args() noexcept { return args_; }
+
+    void accept(ASTVisitor &v) override { v.visit(*this); }
 };
 
 class Binary_operator : public Expression {
