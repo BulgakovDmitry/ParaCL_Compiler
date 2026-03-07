@@ -20,8 +20,6 @@ class Simulator final : public ASTVisitor {
 
     void visit(Empty_stmt &node) override;
 
-    void visit(Assignment_stmt &node) override;
-
     void visit(Input &node) override;
 
     void visit(If_stmt &node) override;

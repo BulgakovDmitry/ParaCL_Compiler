@@ -61,28 +61,6 @@ void Graph_dump::visit(Empty_stmt &node) {
         << " | addr: " << &node << " | parent: " << parent_ << "}\"" << "];\n";
 }
 
-void Graph_dump::visit(Assignment_stmt &node) {
-    auto *var = node.get_variable();
-    auto *val = &node.get_value();
-
-    gv_ << "    node_" << &node
-        << "[shape=Mrecord; style=filled; fillcolor=plum"
-        << "; color=\"#000000\"; fontcolor=\"#000000\"; "
-        << "label=\"{ Assignment" << " | addr: " << &node
-        << " | parent: " << parent_ << "| { left: " << var
-        << " | right: " << val << " } }\"" << "];\n";
-
-    if (var) {
-        emit_edge(&node, var);
-        Graph_dump child{gv_, &node};
-        var->accept(child);
-    }
-
-    emit_edge(&node, val);
-    Graph_dump child{gv_, &node};
-    val->accept(child);
-}
-
 void Graph_dump::visit(Assignment_expr &node) {
     auto *var = node.get_variable();
     auto *val = &node.get_value();

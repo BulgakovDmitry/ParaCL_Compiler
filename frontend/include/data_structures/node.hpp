@@ -36,7 +36,6 @@ class ASTVisitor {
     virtual void visit(Program &node) = 0;
     virtual void visit(Block_stmt &node) = 0;
     virtual void visit(Empty_stmt &node) = 0;
-    virtual void visit(Assignment_stmt &node) = 0;
     virtual void visit(Assignment_expr &node) = 0;
     virtual void visit(Input &node) = 0;
     virtual void visit(If_stmt &node) = 0;
@@ -114,22 +113,6 @@ class Block_stmt final : public Statement {
 
     const StmtList &get_stmts() const noexcept { return stmts_; }
     StmtList &get_stmts() noexcept { return stmts_; }
-
-    void accept(ASTVisitor &visitor) override { visitor.visit(*this); }
-};
-
-class Assignment_stmt final : public Statement {
-  private:
-    Variable_ptr variable_;
-    Expression_ptr value_;
-
-  public:
-    Assignment_stmt(Variable_ptr variable, Expression_ptr value)
-        : variable_(variable), value_(value) {}
-
-    const Variable_ptr get_variable() const noexcept { return variable_; }
-    Expression &get_value() noexcept { return *value_; }
-    const Expression &get_value() const noexcept { return *value_; }
 
     void accept(ASTVisitor &visitor) override { visitor.visit(*this); }
 };
