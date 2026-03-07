@@ -24,7 +24,6 @@ void Simulator::visit(Block_stmt &node) {
 
 void Simulator::visit(Empty_stmt &node) {};
 
-
 void Simulator::visit(If_stmt &node) {
     auto condition = evaluate_expression(node.get_condition());
 
