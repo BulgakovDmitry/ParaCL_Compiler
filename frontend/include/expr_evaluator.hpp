@@ -30,7 +30,6 @@ class Expression_evaluator final : public ASTVisitor {
     void visit(Program &node) override;
     void visit(Block_stmt &node) override;
     void visit(Empty_stmt &node) override;
-    void visit(Assignment_stmt &node) override;
     void visit(If_stmt &node) override;
     void visit(While_stmt &node) override;
     void visit(Print_stmt &node) override;
