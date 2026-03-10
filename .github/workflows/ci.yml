@@ -44,11 +44,9 @@ jobs:
         with:
           version: "18"
 
-      - name: Debug LLVM installation
+      - name: Fix libtinfo compatibility
         run: |
-          llvm-config --version
-          llvm-config --includedir
-          find /usr -name "ArrayRef.h" 2>/dev/null
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
 
       - name: Install other dependencies
         run: |
@@ -61,6 +59,11 @@ jobs:
           sudo cmake -B build -S .
           sudo cmake --build build
           sudo cmake --install build
+
+      - name: Verify LLVM installation
+        run: |
+          llvm-config --version
+          llvm-config --includedir
 
       - name: Configure CMake
         run: cmake -B build -S .
