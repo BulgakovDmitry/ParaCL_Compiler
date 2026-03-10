@@ -21,14 +21,6 @@ void Code_generator::visit(Block_stmt &node) {
     }
 }
 
-void Code_generator::visit(Empty_stmt &node) {};
-
-void Code_generator::visit(If_stmt &node) {}
-
-void Code_generator::visit(While_stmt &node) {}
-
-void Code_generator::visit(Print_stmt &node) {}
-
 void Code_generator::visit(Variable &node) {
     auto var_name = std::string(node.get_name());
     llvm::AllocaInst *alloca = scope_stack_.lookup(var_name);
@@ -195,9 +187,20 @@ void Code_generator::visit(Number &node) {
                                          node.get_value());
 }
 
+void Code_generator::visit(Empty_stmt &node) {};
+
+void Code_generator::visit(If_stmt &node) {}
+
+void Code_generator::visit(While_stmt &node) {}
+
+void Code_generator::visit(Print_stmt &node) {}
+
 void Code_generator::visit(Func &node) {}
+
 void Code_generator::visit(Call &node) {}
+
 void Code_generator::visit(Return_stmt &node) {}
+
 void Code_generator::visit(Expr_stmt &node) {}
 
 } // namespace language
