@@ -1,6 +1,7 @@
 #include "codegen/codegen.hpp"
 #include "node.hpp"
 #include <iostream>
+#include <llvm-18/llvm/IR/Function.h>
 
 namespace language {
 
@@ -22,53 +23,39 @@ void Code_generator::visit(Block_stmt &node) {
 
 void Code_generator::visit(Empty_stmt &node) {};
 
-void Code_generator::visit(Assignment_stmt &node) {
-    auto var_name = static_cast<std::string>(node.get_variable()->get_name());
-    const auto &value = evaluate_expression(node.get_value());
+void Code_generator::visit(If_stmt &node) {}
 
-    auto it = symbol_table_.find(var_name);
-    if (it != symbol_table_.end())
-        it->second = value;
-    else
-        symbol_table_.emplace(var_name, value);
-}
-
-void Code_generator::visit(If_stmt &node) {
-    auto condition = evaluate_expression(node.get_condition());
-
-    if (condition != 0) {
-        node.then_branch().accept(*this);
-    } else {
-        const bool contains_else_node = node.contains_else_branch();
-
-        if (contains_else_node)
-            node.else_branch().accept(*this);
-    }
-}
-
-void Code_generator::visit(While_stmt &node) {
-    while (evaluate_expression(node.get_condition())) {
-        node.get_body().accept(*this);
-    }
-}
+void Code_generator::visit(While_stmt &node) {}
 
 void Code_generator::visit(Print_stmt &node) {}
 
-void Code_generator::visit(Variable &node) {}
+void Code_generator::visit(Variable &node) {
+    auto var_name = std::string(node.get_name());
+    llvm::AllocaInst* alloca = scope_stack_.lookup(var_name);
+
+    if (!alloca)
+        throw std::runtime_error("use of undeclared variable: " + var_name);
+
+    last_value_ = builder_.CreateLoad(alloca->getAllocatedType(), alloca, var_name);
+}
 
 void Code_generator::visit(Assignment_expr &node) {
-    auto &nametable = simulator_.get_nametable();
     auto var_name = std::string{node.get_variable()->get_name()};
 
-    Code_generator last_value_eval{simulator_};
-    node.get_value().accept(last_value_eval);
-    last_value_ = last_value_eval.last_value_;
+    node.get_value().accept(*this);
+    auto value = last_value_;
 
-    auto &&it = nametable.find(var_name);
-    if (it != nametable.end())
-        it->second = last_value_;
-    else
-        nametable.emplace(var_name, last_value_);
+    auto alloca = scope_stack_.lookup(var_name);
+
+    if (!alloca) {
+        llvm::Function* func = builder_.GetInsertBlock()->getParent();
+        llvm::IRBuilder<> tmpBuilder(&func->getEntryBlock(), func->getEntryBlock().begin());
+        alloca = tmpBuilder.CreateAlloca(llvm::Type::getInt32Ty(context_), nullptr, var_name);
+
+        scope_stack_.declare(var_name, alloca);
+    }
+
+    builder_.CreateStore(value, alloca);
 };
 
 void Code_generator::visit(Binary_operator &node) {
@@ -176,12 +163,11 @@ void Code_generator::visit(Binary_operator &node) {
 }
 
 void Code_generator::visit(Unary_operator &node) {
-    Code_generator eval{simulator_};
-    node.get_operand().accept(eval);
-    auto value = eval.last_value_;
+    node.get_operand().accept(*this);
+    auto value = last_value_;
     switch (node.get_operator()) {
     case Unary_operators::Neg: {
-        last_value_ = -(value);
+        last_value_ = builder_.CreateNeg(value, "neg");
         break;
     }
     case Unary_operators::Plus: {
@@ -189,7 +175,8 @@ void Code_generator::visit(Unary_operator &node) {
         break;
     }
     case Unary_operators::Not: {
-        last_value_ = !value;
+        auto not_bool = builder_.CreateICmpEQ(value, 0, "eqtmp");
+        last_value_ = builder_.CreateZExt(not_bool, llvm::Type::getInt32Ty(context_), "unarynotzext");
         break;
     }
     default:
@@ -197,12 +184,7 @@ void Code_generator::visit(Unary_operator &node) {
     }
 }
 
-void Code_generator::visit(Input &node) {
-    number_t value;
-    std::cin >> value;
-
-    last_value_ = value;
-}
+void Code_generator::visit(Input &node) {}
 
 void Code_generator::visit(Number &node) {
     last_value_ = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context_),
@@ -210,7 +192,8 @@ void Code_generator::visit(Number &node) {
 }
 
 void Code_generator::visit(Func &node) {}
-
 void Code_generator::visit(Call &node) {}
+void Code_generator::visit(Return_stmt &node) {}
+void Code_generator::visit(Expr_stmt &node) {}
 
 } // namespace language

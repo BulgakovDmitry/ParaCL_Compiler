@@ -2,7 +2,7 @@
 #define FRONTEND_INCLUDE_CODEGEN_HPP
 
 #include "data_structures/node.hpp"
-
+#include "codegen/scope_stack.hpp"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -19,20 +19,17 @@
 
 namespace language {
 
-class Code_generator : public ASTVisitor {
+class Code_generator final : public ASTVisitor {
   private:
     llvm::LLVMContext context_;
     llvm::Module module_;
     llvm::IRBuilder<> builder_;
 
-    std::unordered_map<std::string, llvm::AllocaInst *> symbol_table_;
-    std::vector<std::unordered_map<std::string, llvm::AllocaInst *>>
-        scope_stack_;
+    Scope_stack scope_stack_;
 
     llvm::Function *current_function_ = nullptr;
 
     llvm::Value *last_value_;
-
   public:
     Code_generator(const std::string &module_name)
         : module_{module_name, context_}, builder_{context_} {
@@ -40,12 +37,9 @@ class Code_generator : public ASTVisitor {
     }
 
     void visit(Program &node) override;
-
     void visit(Block_stmt &node) override;
 
     void visit(Empty_stmt &node) override;
-
-    void visit(Assignment_stmt &node) override;
 
     void visit(Input &node) override;
 
@@ -56,18 +50,15 @@ class Code_generator : public ASTVisitor {
     void visit(Print_stmt &node) override;
 
     void visit(Assignment_expr &node) override;
-
     void visit(Binary_operator &node) override;
-
     void visit(Unary_operator &node) override;
-
     void visit(Number &node) override;
-
     void visit(Variable &node) override;
 
     void visit(Func &node) override;
-
     void visit(Call &node) override;
+    void visit(Return_stmt &node) override;
+    void visit(Expr_stmt &node) override;
 };
 
 } // namespace language

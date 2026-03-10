@@ -8,11 +8,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
-find_package(LLVM REQUIRED CONFIG COMPONENTS core support)
+find_package(LLVM REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
-message(STATUS "LLVM libraries: ${LLVM_LIBRARIES}")
+message(STATUS "LLVM definitions: ${LLVM_DEFINITIONS}")
+
+set(LLVM_REQUIRED_COMPONENTS core support)
+llvm_map_components_to_libnames(LLVM_LIBS ${LLVM_REQUIRED_COMPONENTS})
+
+message(STATUS "LLVM mapped libs: ${LLVM_LIBS}")
 
 add_library(frontend_headers INTERFACE)
 target_include_directories(frontend_headers
@@ -20,7 +25,9 @@ target_include_directories(frontend_headers
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
+    ${LLVM_INCLUDE_DIRS}
 )
+target_compile_definitions(frontend_headers INTERFACE ${LLVM_DEFINITIONS})
 add_library(frontend::headers ALIAS frontend_headers)
 
 set(SOURCES
@@ -50,6 +57,7 @@ add_executable(frontend
     src/expr_evaluator.cpp
     src/simulator.cpp
     src/graph_dump.cpp
+    src/codegen/codegen.cpp
     ${FLEX_Lexer_OUTPUTS}
     ${BISON_Parser_OUTPUTS}
 )
@@ -71,14 +79,6 @@ target_compile_definitions(frontend PRIVATE
     ${LLVM_DEFINITIONS}
 )
 
-if(TARGET LLVM::Core AND TARGET LLVM::Support)
-    target_link_libraries(frontend PRIVATE
-        LLVM::Core
-        LLVM::Support
-    )
-else()
-    # fallback for old version of LLVM
-    target_link_libraries(frontend PRIVATE ${LLVM_LIBRARIES})
-endif()
+target_link_libraries(frontend PRIVATE ${LLVM_LIBS})
 
 add_subdirectory(tests)
