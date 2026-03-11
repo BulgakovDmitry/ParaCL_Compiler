@@ -1,15 +1,30 @@
 #include "codegen/codegen.hpp"
 #include "node.hpp"
 #include <iostream>
+#include <llvm-18/llvm/IR/Constants.h>
+#include <llvm-18/llvm/IR/DerivedTypes.h>
 #include <llvm-18/llvm/IR/Function.h>
+#include <llvm-18/llvm/IR/Value.h>
 
 namespace language {
 
 void Code_generator::visit(Program &node) {
-    const auto &statements = node.get_stmts();
+    auto *main_ty = llvm::FunctionType::get(llvm::Type::getInt32Ty(context_), false);
+    auto *main_func = llvm::Function::Create(main_ty, llvm::Function::ExternalLinkage, "main", module_);
 
+    auto *entry_bb = llvm::BasicBlock::Create(context_, "entry", main_func);
+
+    builder_.SetInsertPoint(entry_bb);
+    current_function_ = main_func;
+
+    const auto &statements = node.get_stmts();
     for (const auto &stmt : statements) {
         stmt->accept(*this);
+    }
+
+    if (!builder_.GetInsertBlock()->getTerminator()) {
+        llvm::Value *zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context_), 0);
+        builder_.CreateRet(zero);
     }
 }
 
@@ -201,6 +216,8 @@ void Code_generator::visit(Call &node) {}
 
 void Code_generator::visit(Return_stmt &node) {}
 
-void Code_generator::visit(Expr_stmt &node) {}
+void Code_generator::visit(Expr_stmt &node) {
+    node.get_expr().accept(*this);
+}
 
 } // namespace language

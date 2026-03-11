@@ -37,9 +37,6 @@ void driver(int argc, const char **argv) {
         throw std::runtime_error("unknown error\n");
     }
 
-    // language::Simulator simulator{};
-    // root->accept(simulator);
-
 #ifdef GRAPH_DUMP
     // ____________GRAPH DUMP___________ //
     const auto paths = language::make_dump_paths();
@@ -54,9 +51,13 @@ void driver(int argc, const char **argv) {
     language::graph_dump(gv, *root);
 #endif
 
-
+#ifdef INTERPRETATOR
     language::Code_generator generator{argv[1]};
     root->accept(generator);
 
-    generator.print();
+    generator.print(); // debug output generated LLVM IR
+#else
+    language::Simulator simulator{};
+    root->accept(simulator);
+#endif
 }

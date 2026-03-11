@@ -46,7 +46,7 @@ class Scope_stack final {
         return nullptr;
     }
 
-    bool find(name_t_sv var_name) const { return !lookup(var_name); }
+    bool find(name_t_sv var_name) const { return lookup(var_name); }
 
     void declare(name_t_sv var_name, llvm::AllocaInst *alloca) {
         if (scopes_.empty()) {
