@@ -1,9 +1,11 @@
 #include "codegen/codegen.hpp"
 #include "node.hpp"
 #include <iostream>
+#include <llvm-18/llvm/IR/BasicBlock.h>
 #include <llvm-18/llvm/IR/Constants.h>
 #include <llvm-18/llvm/IR/DerivedTypes.h>
 #include <llvm-18/llvm/IR/Function.h>
+#include <llvm-18/llvm/IR/Type.h>
 #include <llvm-18/llvm/IR/Value.h>
 
 namespace language {
@@ -34,17 +36,6 @@ void Code_generator::visit(Block_stmt &node) {
     for (const auto &stmt : statements) {
         stmt->accept(*this);
     }
-}
-
-void Code_generator::visit(Variable &node) {
-    auto var_name = std::string(node.get_name());
-    llvm::AllocaInst *alloca = scope_stack_.lookup(var_name);
-
-    if (!alloca)
-        throw std::runtime_error("use of undeclared variable: " + var_name);
-
-    last_value_ =
-        builder_.CreateLoad(alloca->getAllocatedType(), alloca, var_name);
 }
 
 void Code_generator::visit(Assignment_expr &node) {
@@ -196,28 +187,72 @@ void Code_generator::visit(Unary_operator &node) {
 }
 
 void Code_generator::visit(Input &node) {}
+void Code_generator::visit(Print_stmt &node) {}
+
+void Code_generator::visit(If_stmt &node) {
+    node.get_condition().accept(*this);
+
+    llvm::Value *cond = builder_.CreateICmpNE(last_value_, llvm::ConstantInt::get(llvm::Type::getInt32Ty(context_), 0), "ifcond");
+
+    auto *then_bb = llvm::BasicBlock::Create(context_, "then", current_function_);
+
+    bool contains_else = node.contains_else_branch();
+
+    llvm::BasicBlock* else_bb = nullptr;
+
+    if (contains_else)
+        else_bb = llvm::BasicBlock::Create(context_, "else", current_function_);
+
+    auto merge_bb = llvm::BasicBlock::Create(context_, "ifcont", current_function_);
+
+    if (contains_else)
+        last_value_ = builder_.CreateCondBr(cond, then_bb, else_bb);
+    else
+        last_value_ = builder_.CreateCondBr(cond, then_bb, merge_bb);
+
+    builder_.SetInsertPoint(then_bb);
+    node.then_branch().accept(*this);
+    if (!builder_.GetInsertBlock()->getTerminator())
+        builder_.CreateBr(merge_bb);
+
+    if (contains_else) {
+        builder_.SetInsertPoint(else_bb);
+        node.else_branch().accept(*this);
+        if (!builder_.GetInsertBlock()->getTerminator())
+            builder_.CreateBr(merge_bb);
+    }
+
+    builder_.SetInsertPoint(merge_bb);
+}
+
+void Code_generator::visit(While_stmt &node) {}
+
+void Code_generator::visit(Func &node) {}
+void Code_generator::visit(Call &node) {}
+void Code_generator::visit(Return_stmt &node) {}
+
+void Code_generator::visit(Expr_stmt &node) {
+    node.get_expr().accept(*this);
+}
 
 void Code_generator::visit(Number &node) {
     last_value_ = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context_),
                                          node.get_value());
 }
 
-void Code_generator::visit(Empty_stmt &node) {};
+void Code_generator::visit(Variable &node) {
+    auto var_name = std::string(node.get_name());
+    llvm::AllocaInst *alloca = scope_stack_.lookup(var_name);
 
-void Code_generator::visit(If_stmt &node) {}
+    if (!alloca)
+        throw std::runtime_error("use of undeclared variable: " + var_name);
 
-void Code_generator::visit(While_stmt &node) {}
-
-void Code_generator::visit(Print_stmt &node) {}
-
-void Code_generator::visit(Func &node) {}
-
-void Code_generator::visit(Call &node) {}
-
-void Code_generator::visit(Return_stmt &node) {}
-
-void Code_generator::visit(Expr_stmt &node) {
-    node.get_expr().accept(*this);
+    last_value_ =
+        builder_.CreateLoad(alloca->getAllocatedType(), alloca, var_name);
 }
+
+void Code_generator::visit(Empty_stmt &node) {
+    // nothing needs to be done
+};
 
 } // namespace language
